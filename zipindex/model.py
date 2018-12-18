@@ -2,8 +2,6 @@ import datetime
 import pony.orm as orm
 
 db = orm.Database()
-db_session = orm.db_session
-select = orm.select
 
 
 class Directory(db.Entity):
@@ -16,8 +14,10 @@ class Archive(db.Entity):
     id = orm.PrimaryKey(int, auto=True)
     directory = orm.Required(Directory, column='directory_id')
     path = orm.Required(str, unique=True)
+    path_lower = orm.Required(str)
     files = orm.Set('File')
-    last_update = orm.Required(datetime.datetime, sql_default='current_timestamp')
+    last_update = orm.Required(datetime.datetime,
+                               sql_default='current_timestamp')
 
 
 class File(db.Entity):

@@ -4,7 +4,13 @@ import logging
 import os
 import zipfile
 
-from zipindex.model import db_session, bind, select, Directory, Archive, File
+from zipindex.model import (
+    bind, Directory, Archive, File
+)
+
+from pony.orm import (
+    db_session, select
+)
 
 LOG = logging.getLogger('zipindex')
 
@@ -65,7 +71,8 @@ def create(ctx, sources):
                 zip = zipfile.ZipFile(entry.path)
                 LOG.info('processing archive %s', entry.path)
                 archive = (Archive.get(path=entry.path) or
-                           Archive(directory=dir, path=entry.path))
+                           Archive(directory=dir, path=entry.path,
+                                   path_lower=entry.path.lower()))
 
                 for name in zip.namelist():
                     (File.get(archive=archive, path=name) or
@@ -74,17 +81,31 @@ def create(ctx, sources):
 
 @zipindex.command()
 @click.option('-i', '--ignore-case', is_flag=True)
+@click.option('-a', '--archive-pattern')
 @click.argument('patterns', nargs=-1)
 @click.pass_obj
-def search(ctx, ignore_case, patterns):
+def search(ctx, ignore_case, archive_pattern, patterns):
     with db_session:
+        query = select(f for f in File)
+
+        if archive_pattern:
+            if ignore_case:
+                query = query.filter(lambda f:
+                                     archive_pattern.lower()
+                                     in f.archive.path_lower)
+            else:
+                query = query.filter(lambda f:
+                                     archive_pattern
+                                     in f.archive.path)
+
         for pattern in patterns:
             if ignore_case:
-                query = select(f for f in File if pattern.lower() in f.path_lower)
+                filtered_query = query.filter(lambda f:
+                                              pattern.lower() in f.path_lower)
             else:
-                query = select(f for f in File if pattern in f.path)
+                filtered_query = query.filter(lambda f: pattern in f.path)
 
-            for res in query:
+            for res in filtered_query:
                 print(res.archive.path, res.path)
 
 
