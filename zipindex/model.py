@@ -24,6 +24,7 @@ class File(db.Entity):
     id = orm.PrimaryKey(int, auto=True)
     archive = orm.Required(Archive, column='archive_id')
     path = orm.Required(str)
+    path_lower = orm.Required(str)
     orm.composite_key(archive, path)
 
 

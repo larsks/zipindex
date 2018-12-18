@@ -69,18 +69,32 @@ def create(ctx, sources):
 
                 for name in zip.namelist():
                     (File.get(archive=archive, path=name) or
-                     File(archive=archive, path=name))
+                     File(archive=archive, path=name, path_lower=name.lower()))
 
 
 @zipindex.command()
+@click.option('-i', '--ignore-case', is_flag=True)
 @click.argument('patterns', nargs=-1)
 @click.pass_obj
-def search(ctx, patterns):
+def search(ctx, ignore_case, patterns):
     with db_session:
         for pattern in patterns:
-            query = select(f for f in File if pattern in f.path)
+            if ignore_case:
+                query = select(f for f in File if pattern.lower() in f.path_lower)
+            else:
+                query = select(f for f in File if pattern in f.path)
+
             for res in query:
                 print(res.archive.path, res.path)
+
+
+@zipindex.command()
+@click.pass_obj
+def archives(ctx):
+    with db_session:
+        query = select(a for a in Archive)
+        for archive in query:
+            print(archive.path)
 
 
 if __name__ == '__main__':
