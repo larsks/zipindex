@@ -4,7 +4,7 @@ import logging
 import os
 import zipfile
 
-from model import db_session, bind, select, Directory, Archive, File
+from zipindex.model import db_session, bind, select, Directory, Archive, File
 
 LOG = logging.getLogger('zipindex')
 
