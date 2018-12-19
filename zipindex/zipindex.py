@@ -98,14 +98,20 @@ def search(ctx, ignore_case, archive_pattern, patterns):
                                      archive_pattern
                                      in f.archive.path)
 
-        for pattern in patterns:
-            if ignore_case:
-                filtered_query = query.filter(lambda f:
-                                              pattern.lower() in f.path_lower)
-            else:
-                filtered_query = query.filter(lambda f: pattern in f.path)
+        # There must be a better way to do this.
+        if patterns:
+            for pattern in patterns:
+                if ignore_case:
+                    filtered_query = query.filter(
+                        lambda f: pattern.lower() in f.path_lower)
+                else:
+                    filtered_query = query.filter(
+                        lambda f: pattern in f.path)
 
-            for res in filtered_query:
+                for res in filtered_query:
+                    print(res.archive.path, res.path)
+        else:
+            for res in query:
                 print(res.archive.path, res.path)
 
 
